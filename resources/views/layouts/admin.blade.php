@@ -27,7 +27,7 @@
 
         <a class="block px-3 py-2 rounded hover:bg-blue-900/20 {{ request()->routeIs('admin.customers.*') ? 'bg-blue-900/20' : '' }}" href="{{ route('admin.customers.index') }}">Customers</a>
 
-        <a class="block px-3 py-2 rounded hover:bg-blue-900/20 {{ request()->routeIs('admin.settings.index') ? 'bg-blue-900/20' : '' }}" href="{{ route('admin.settings') }}">Settings</a>
+        <a class="block px-3 py-2 rounded hover:bg-blue-900/20 {{ request()->routeIs('admin.settings.*') ? 'bg-blue-900/20' : '' }}" href="{{ route('admin.settings.index') }}">Settings</a>
 
         <form method="POST" action="{{ route('logout') }}">
           @csrf
