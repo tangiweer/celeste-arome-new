@@ -6,6 +6,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\HomeController;
@@ -74,43 +75,50 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/failed',  [PaymentController::class, 'failed'])->name('payment.failed');
 });
 
-// Admin routes
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        $since = now()->subDays(30);
+// Admin routes (SINGLE group — no nesting)
+Route::middleware(['auth', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-        $stats = [
-            'revenue'            => Order::whereDate('created_at', '>=', $since)->sum('total'),
-            'orders'             => Order::whereDate('created_at', '>=', $since)->count(),
-            'customers'          => User::whereDate('created_at', '>=', $since)->count(),
-            'pending_deliveries' => Order::where('status', 'pending')->count(), // FIXED (backslash, not dot)
-            'income'             => Order::whereDate('created_at', '>=', $since)->sum('total'),
-            'expenses'           => 0,
-            'balance'            => Order::whereDate('created_at', '>=', $since)->sum('total'),
-        ];
+        Route::get('/dashboard', function () {
+            $since = now()->subDays(30);
 
-        $topProducts = Product::whereHas('orderItems')
-            ->withCount('orderItems')
-            ->orderBy('order_items_count', 'desc')
-            ->limit(4)
-            ->get();
+            $stats = [
+                'revenue'            => Order::whereDate('created_at', '>=', $since)->sum('total'),
+                'orders'             => Order::whereDate('created_at', '>=', $since)->count(),
+                'customers'          => User::whereDate('created_at', '>=', $since)->count(),
+                'pending_deliveries' => Order::where('status', 'pending')->count(),
+                'income'             => Order::whereDate('created_at', '>=', $since)->sum('total'),
+                'expenses'           => 0,
+                'balance'            => Order::whereDate('created_at', '>=', $since)->sum('total'),
+            ];
 
-        $offers = [
-            ['title' => 'Summer Sale 20% Off', 'date' => 'Aug 2025'],
-            ['title' => 'Buy 2 Get 1 Free', 'date' => 'Sep 2025'],
-            ['title' => 'Free Shipping Over $50', 'date' => 'Ongoing'],
-        ];
+            $topProducts = Product::whereHas('orderItems')
+                ->withCount('orderItems')
+                ->orderBy('order_items_count', 'desc')
+                ->limit(4)
+                ->get();
 
-        return view('admin.dashboard', compact('stats', 'topProducts', 'offers'));
-    })->name('dashboard');
+            $offers = [
+                ['title' => 'Summer Sale 20% Off', 'date' => 'Aug 2025'],
+                ['title' => 'Buy 2 Get 1 Free', 'date' => 'Sep 2025'],
+                ['title' => 'Free Shipping Over $50', 'date' => 'Ongoing'],
+            ];
 
-    Route::resource('categories', AdminCategoryController::class);
-    Route::resource('products', AdminProductController::class);
-    Route::resource('customers', CustomerController::class);
+            return view('admin.dashboard', compact('stats', 'topProducts', 'offers'));
+        })->name('dashboard');
+
+        Route::resource('categories', AdminCategoryController::class);
+        Route::resource('products',   AdminProductController::class);
+        Route::resource('customers',  CustomerController::class);
+
+      Route::resource('orders', App\Http\Controllers\Admin\OrderController::class);
 
 
-    Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
-    Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
-});
+        // Settings
+        Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+    });
 
 require __DIR__ . '/auth.php';
