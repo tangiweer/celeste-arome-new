@@ -1,7 +1,12 @@
 /vendor/
 /node_modules/
 .env
-.env.*
+.env.local
+.env.*.local
+
+
+!.env.example
+
 /public/storage
 /storage/*.key
 composer.lock
